@@ -8,8 +8,9 @@ from plotly.subplots import make_subplots
 
 from .cell_line_priors import (
     ESSENTIAL_AA, CONDITIONALLY_ESSENTIAL_AA, NON_ESSENTIAL_AA,
-    STANDARD_AA, get_cell_line_prior, get_all_cell_line_ids,
+    get_cell_line_prior, get_all_cell_line_ids,
 )
+from .composition_features import STANDARD_AA
 from .scoring import RecommendationResult
 from .blend_optimizer import BlendResult
 
