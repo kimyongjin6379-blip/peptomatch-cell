@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PeptoMatch Cell{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { background: #0b1020; color: #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+        .badge-ok { background: #065f46; color: #d1fae5; }
+        .badge-bad { background: #7f1d1d; color: #fecaca; }
+        .nav-link { color: #9ca3af; padding: 0.5rem 1rem; }
+        .nav-link.active, .nav-link:hover { color: #f9fafb; background: #1f2937; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px 12px; border-bottom: 1px solid #1f2937; text-align: left; font-size: 0.9rem; }
+        th { color: #9ca3af; font-weight: 600; background: #0f172a; }
+        button.btn { background: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; }
+        button.btn:hover { background: #1d4ed8; }
+        button.btn:disabled { background: #4b5563; cursor: not-allowed; }
+        select, input { background: #1f2937; border: 1px solid #374151; color: #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 8px; }
+    </style>
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <header class="border-b border-gray-800 bg-gray-900">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🧫</span>
+                <div>
+                    <div class="text-lg font-bold">PeptoMatch Cell</div>
+                    <div class="text-xs text-gray-400">동물 세포주 펩톤 매칭 시스템 (v0.1 데모)</div>
+                </div>
+            </div>
+            <nav class="flex items-center gap-2">
+                <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">대시보드</a>
+                <a href="/recommend" class="nav-link {% if request.url.path == '/recommend' %}active{% endif %}">펩톤 추천</a>
+                <a href="/culture" class="nav-link {% if request.url.path == '/culture' %}active{% endif %}">배양 실험</a>
+            </nav>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="badge {% if backend_ok %}badge-ok{% else %}badge-bad{% endif %}">
+                    Recommender {% if backend_ok %}ON{% else %}OFF{% endif %}
+                </span>
+                <span class="badge {% if cell_db_ok %}badge-ok{% else %}badge-bad{% endif %}">
+                    DB {% if cell_db_ok %}ON{% else %}OFF{% endif %}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center text-xs text-gray-500 py-6">
+        PeptoMatch Cell — Sempio Bio
+    </footer>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}PeptoMatch Cell — 대시보드{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="card p-6">
+        <div class="text-xs text-gray-400 uppercase">세포주</div>
+        <div class="text-3xl font-bold mt-2">{{ cell_lines|length }}</div>
+        <div class="text-sm text-gray-500 mt-1">profiles loaded</div>
+    </div>
+    <div class="card p-6">
+        <div class="text-xs text-gray-400 uppercase">펩톤 DB</div>
+        <div class="text-3xl font-bold mt-2">{{ peptone_count }}</div>
+        <div class="text-sm text-gray-500 mt-1">composition rows</div>
+    </div>
+    <div class="card p-6">
+        <div class="text-xs text-gray-400 uppercase">배양 실험</div>
+        <div class="text-3xl font-bold mt-2">{{ summary.total_experiments or 0 }}</div>
+        <div class="text-sm text-gray-500 mt-1">{{ summary.total_conditions or 0 }} conditions</div>
+    </div>
+    <div class="card p-6">
+        <div class="text-xs text-gray-400 uppercase">시계열</div>
+        <div class="text-3xl font-bold mt-2">{{ summary.total_timeseries or 0 }}</div>
+        <div class="text-sm text-gray-500 mt-1">recorded curves</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="card p-6">
+        <h2 class="text-lg font-bold mb-4">지원 세포주</h2>
+        <table>
+            <thead>
+                <tr><th>ID</th><th>이름</th><th>응용</th></tr>
+            </thead>
+            <tbody>
+                {% for cl in cell_lines %}
+                <tr>
+                    <td class="font-mono">{{ cl.id }}</td>
+                    <td>{{ cl.name }}</td>
+                    <td class="text-gray-400 text-xs">{{ cl.application }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card p-6">
+        <h2 class="text-lg font-bold mb-4">실험 분포</h2>
+        <div class="mb-4">
+            <div class="text-xs text-gray-400 uppercase mb-2">세포주별</div>
+            {% for cell, n in (summary.by_cell_line or {}).items() %}
+                <div class="flex justify-between text-sm py-1">
+                    <span>{{ cell }}</span>
+                    <span class="font-mono">{{ n }}</span>
+                </div>
+            {% endfor %}
+            {% if not summary.by_cell_line %}
+                <div class="text-sm text-gray-500">아직 실험이 없습니다. cell-culture-app에서 엑셀을 업로드해주세요.</div>
+            {% endif %}
+        </div>
+        <div>
+            <div class="text-xs text-gray-400 uppercase mb-2">배양 모드별</div>
+            {% for mode, n in (summary.by_culture_mode or {}).items() %}
+                <div class="flex justify-between text-sm py-1">
+                    <span>{{ mode }}</span>
+                    <span class="font-mono">{{ n }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

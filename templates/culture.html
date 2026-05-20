@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}배양 실험 — PeptoMatch Cell{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="card p-4">
+        <div class="text-xs text-gray-400 uppercase">실험</div>
+        <div class="text-2xl font-bold">{{ summary.total_experiments or 0 }}</div>
+    </div>
+    <div class="card p-4">
+        <div class="text-xs text-gray-400 uppercase">조건</div>
+        <div class="text-2xl font-bold">{{ summary.total_conditions or 0 }}</div>
+    </div>
+    <div class="card p-4">
+        <div class="text-xs text-gray-400 uppercase">시계열</div>
+        <div class="text-2xl font-bold">{{ summary.total_timeseries or 0 }}</div>
+    </div>
+    <div class="card p-4">
+        <div class="text-xs text-gray-400 uppercase">세포주 수</div>
+        <div class="text-2xl font-bold">{{ (summary.by_cell_line or {})|length }}</div>
+    </div>
+</div>
+
+<div class="card p-6 mb-6">
+    <h2 class="text-lg font-bold mb-4">실험 목록</h2>
+    {% if experiments %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th><th>날짜</th><th>세포주</th><th>모드</th>
+                <th>제목</th><th>Basal</th><th>Source</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in experiments %}
+            <tr>
+                <td class="font-mono">{{ e.id }}</td>
+                <td class="text-gray-400">{{ e.experiment_date or '-' }}</td>
+                <td><span class="badge badge-ok">{{ e.cell_line or '?' }}</span></td>
+                <td>{{ e.culture_mode or '-' }}</td>
+                <td>{{ e.title or '-' }}</td>
+                <td class="text-gray-400">{{ e.basal_media or '-' }}</td>
+                <td class="text-xs text-gray-500">{{ e.source_filename or '-' }}</td>
+                <td><button class="text-xs text-blue-400 hover:underline" onclick="loadCond({{ e.id }})">조건 보기</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-gray-500 text-sm">아직 적재된 실험이 없습니다. cell-culture-app에서 엑셀을 업로드하세요.</div>
+    {% endif %}
+</div>
+
+<div id="conditions" class="card p-6 hidden">
+    <h3 class="text-base font-bold mb-4" id="cond-title"></h3>
+    <table>
+        <thead>
+            <tr>
+                <th>조건</th><th>Peptone</th><th>Ratio</th>
+                <th>Max VCD</th><th>Final Viab</th><th>Max Titer</th><th>μ_max</th>
+                <th>Combined</th>
+            </tr>
+        </thead>
+        <tbody id="cond-body"></tbody>
+    </table>
+</div>
+
+<script>
+async function loadCond(expId) {
+    const r = await fetch(`/api/cell/conditions?experiment_id=${expId}`);
+    const rows = await r.json();
+    document.getElementById('cond-title').textContent = `실험 #${expId} 조건별 결과 (${rows.length})`;
+    document.getElementById('cond-body').innerHTML = rows.map(c => `
+        <tr>
+            <td class="font-semibold">${c.treatment_name || ''}${c.is_control ? ' <span class="badge badge-bad">control</span>' : ''}</td>
+            <td>${c.peptone_1 || ''}${c.peptone_2 ? ' + ' + c.peptone_2 : ''}</td>
+            <td class="font-mono text-xs">${(c.ratio_1 || 0).toFixed(0)}/${(c.ratio_2 || 0).toFixed(0)}</td>
+            <td class="font-mono">${fmt(c.max_vcd)}</td>
+            <td class="font-mono">${fmt(c.final_viability)}</td>
+            <td class="font-mono">${fmt(c.max_titer)}</td>
+            <td class="font-mono">${fmt(c.mu_max, 4)}</td>
+            <td class="font-mono font-bold">${fmt(c.combined_score)}</td>
+        </tr>
+    `).join('');
+    document.getElementById('conditions').classList.remove('hidden');
+}
+function fmt(v, dp=2) {
+    return (v == null || Number.isNaN(v)) ? '-' : Number(v).toFixed(dp);
+}
+</script>
+{% endblock %}

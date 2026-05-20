@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}펩톤 추천 — PeptoMatch Cell{% endblock %}
+
+{% block content %}
+<div class="card p-6 mb-6">
+    <h2 class="text-lg font-bold mb-4">세포주별 펩톤 추천</h2>
+    <form id="recommend-form" class="flex flex-wrap gap-3 items-end">
+        <div>
+            <label class="block text-xs text-gray-400 mb-1">세포주</label>
+            <select id="cell-line" name="cell_line_id">
+                {% for cl in cell_lines %}
+                    <option value="{{ cl.id }}">{{ cl.id }} — {{ cl.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs text-gray-400 mb-1">Top-K</label>
+            <input id="top-k" name="top_k" type="number" value="10" min="1" max="50" class="w-20">
+        </div>
+        <div>
+            <label class="flex items-center gap-2 text-sm text-gray-300">
+                <input id="sempio-only" type="checkbox" checked> Sempio 제품만
+            </label>
+        </div>
+        <button type="submit" class="btn">추천 실행</button>
+    </form>
+</div>
+
+<div id="summary" class="card p-6 mb-6 hidden">
+    <h3 class="text-base font-bold mb-2" id="summary-title"></h3>
+    <div id="summary-body" class="text-sm text-gray-300"></div>
+</div>
+
+<div id="results" class="card p-6 hidden">
+    <h3 class="text-base font-bold mb-4">추천 결과</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th><th>샘플</th><th>원료</th><th>유형</th>
+                <th>점수</th><th>강점</th><th>약점</th>
+            </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+    </table>
+</div>
+
+<div id="error" class="card p-6 hidden border border-red-700 bg-red-900/30 text-red-200"></div>
+
+<script>
+const form = document.getElementById('recommend-form');
+const results = document.getElementById('results');
+const resultsBody = document.getElementById('results-body');
+const summary = document.getElementById('summary');
+const errorBox = document.getElementById('error');
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.classList.add('hidden');
+    results.classList.add('hidden');
+    summary.classList.add('hidden');
+
+    const payload = {
+        cell_line_id: document.getElementById('cell-line').value,
+        top_k: parseInt(document.getElementById('top-k').value || '10'),
+        sempio_only: document.getElementById('sempio-only').checked,
+    };
+
+    try {
+        const res = await fetch('/api/recommend', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            errorBox.textContent = data.error || res.statusText;
+            errorBox.classList.remove('hidden');
+            return;
+        }
+
+        // Summary
+        const s = data.summary || {};
+        document.getElementById('summary-title').textContent =
+            `${data.cell_line} 요구 프로필`;
+        document.getElementById('summary-body').innerHTML = `
+            <div class="mb-2"><b>고수요 AA:</b> ${(s.high_demand_aa || []).join(', ')}</div>
+            <div class="mb-2"><b>중수요 AA:</b> ${(s.medium_demand_aa || []).join(', ')}</div>
+            <div class="mb-2"><b>Notes:</b><ul class="list-disc ml-5 mt-1">
+                ${(s.key_notes || []).map(n => `<li>${n}</li>`).join('')}
+            </ul></div>
+        `;
+        summary.classList.remove('hidden');
+
+        // Results table
+        resultsBody.innerHTML = (data.recommendations || []).map(r => `
+            <tr>
+                <td class="font-mono">${r.rank}</td>
+                <td class="font-semibold">${r.sample_name}</td>
+                <td class="text-gray-400">${r.raw_material || ''}</td>
+                <td class="text-gray-400">${r.material_type || ''}</td>
+                <td class="font-mono">${r.total_score.toFixed(1)}</td>
+                <td class="text-xs text-green-300">${(r.strengths || []).join(' · ')}</td>
+                <td class="text-xs text-amber-300">${(r.weaknesses || []).join(' · ')}</td>
+            </tr>
+        `).join('');
+        results.classList.remove('hidden');
+    } catch (err) {
+        errorBox.textContent = err.toString();
+        errorBox.classList.remove('hidden');
+    }
+});
+</script>
+{% endblock %}

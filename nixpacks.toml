@@ -1,5 +1,15 @@
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip", "gcc", "sqlite"]
+
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+    "python -m venv --copies /opt/venv",
+    "/opt/venv/bin/pip install --upgrade pip",
+    "/opt/venv/bin/pip install -r requirements.txt",
+    "/opt/venv/bin/pip install -e . || echo 'editable install skipped'",
+    "chmod +x start.sh",
+    "mkdir -p /app/_build_data && cp -rv data /app/_build_data/ 2>/dev/null || true",
+]
 
 [start]
-cmd = "streamlit run app/streamlit_app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true"
+cmd = "bash start.sh"
